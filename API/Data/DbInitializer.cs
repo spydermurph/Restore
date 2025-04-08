@@ -1,26 +1,51 @@
 using System;
+using System.Threading.Tasks;
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data;
 
 public class DbInitializer
 {
-  public static void InitDb(WebApplication app)
-  {
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<StoreContext>()
-      ?? throw new InvalidOperationException("No service for type 'StoreContext' has been registered.");
+    public static async Task InitDb(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<StoreContext>()
+          ?? throw new InvalidOperationException("No service for type 'StoreContext' has been registered.");
 
-    SeedData(context);
-  }
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>()
+          ?? throw new InvalidOperationException("No service for type 'UserManager' has been registered.");
 
-  private static void SeedData(StoreContext context)
-  {
-    context.Database.Migrate();
-    if (context.Products.Any()) return;
+        await SeedData(context, userManager);
+    }
 
-    var products = new List<Product>
+    private static async Task SeedData(StoreContext context, UserManager<User> userManager)
+    {
+        context.Database.Migrate();
+
+        if (!userManager.Users.Any())
+        {
+            var user = new User
+            {
+                UserName = "bob@test.com",
+                Email = "bob@test.com"
+            };
+            await userManager.CreateAsync(user, "Pa$$w0rd");
+            await userManager.AddToRoleAsync(user, "Member");
+
+            var admin = new User
+            {
+                UserName = "admin@test.com",
+                Email = "admin@test.com"
+            };
+            await userManager.CreateAsync(admin, "Pa$$w0rd");
+            await userManager.AddToRolesAsync(admin, ["Member", "Admin"]);
+        }
+
+        if (context.Products.Any()) return;
+
+        var products = new List<Product>
     {
       new() {
           Name = "Angular Speedster Board 2000",
@@ -202,7 +227,7 @@ public class DbInitializer
       },
     };
 
-    context.Products.AddRange(products);
-    context.SaveChanges();
-  }
+        context.Products.AddRange(products);
+        context.SaveChanges();
+    }
 }
