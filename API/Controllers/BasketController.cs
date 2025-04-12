@@ -28,7 +28,7 @@ public class BasketController(StoreContext context) : BaseApiController
   {
     var basket = await RetrieveBasket();
 
-    basket ??= CreateBakset();
+    basket ??= CreateBasket();
 
     var product = await context.Products.FindAsync(productId);
     if (product == null)
@@ -80,16 +80,13 @@ public class BasketController(StoreContext context) : BaseApiController
     return basket;
   }
 
-  private Basket CreateBakset()
+  private Basket CreateBasket()
   {
     var basketId = Guid.NewGuid().ToString();
     var cookieOptions = new CookieOptions
     {
       IsEssential = true,
       Expires = DateTime.Now.AddDays(30),
-      HttpOnly = true,
-      SameSite = SameSiteMode.None,
-      Secure = true
     };
     Response.Cookies.Append("basketId", basketId, cookieOptions);
     var basket = new Basket { BasketId = basketId };
