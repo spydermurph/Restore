@@ -4,9 +4,11 @@ import {
   UseControllerProps,
 } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FormControl, FormHelperText, Typography } from "@mui/material";
 import { UploadFile } from "@mui/icons-material";
+
+type FileWithPreview = File & { preview: string };
 
 type Props<T extends FieldValues> = {
   name: keyof T;
@@ -18,9 +20,12 @@ export default function AppDropzone<T extends FieldValues>(props: Props<T>) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        const fileWithPreview = Object.assign(acceptedFiles[0], {
-          preview: URL.createObjectURL(acceptedFiles[0]),
-        });
+        const fileWithPreview: FileWithPreview = Object.assign(
+          acceptedFiles[0],
+          {
+            preview: URL.createObjectURL(acceptedFiles[0]),
+          }
+        );
         field.onChange(fileWithPreview);
       }
     },
@@ -29,6 +34,10 @@ export default function AppDropzone<T extends FieldValues>(props: Props<T>) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif"],
+    },
+    maxSize: 1024 * 1024 * 5,
   });
 
   const dzStyles = {
@@ -45,6 +54,14 @@ export default function AppDropzone<T extends FieldValues>(props: Props<T>) {
   const dzActive = {
     borderColor: "green",
   };
+
+  useEffect(() => {
+    return () => {
+      if (field.value?.preview) {
+        URL.revokeObjectURL(field.value.preview);
+      }
+    };
+  }, [field.value]);
 
   return (
     <div {...getRootProps()}>

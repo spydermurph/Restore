@@ -65,7 +65,7 @@ export default function ProductForm({
     try {
       const formData = createFormData(data);
 
-      if (watchFile) formData.append("file", watchFile);
+      if (watchFile) formData.append("file", watchFile as unknown as Blob);
 
       if (product)
         await updateProduct({ id: product.id, data: formData }).unwrap();

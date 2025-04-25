@@ -1,14 +1,16 @@
 import { z } from "zod";
 
 const fileSchema = z
-  .instanceof(File)
+  .object({
+    preview: z.string(),
+    lastModified: z.number(),
+    name: z.string(),
+    size: z.number(),
+    type: z.string(),
+  })
   .refine((file) => file.size > 0, {
     message: "A file must be uploaded",
-  })
-  .transform((file) => ({
-    ...file,
-    preview: URL.createObjectURL(file),
-  }));
+  });
 
 export const createProductSchema = z
   .object({
